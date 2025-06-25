@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de Envío de Correos</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        .card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .btn {
+            background-color: #d53f8c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .btn:hover:not(:disabled) {
+            background-color: #c22e7a;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .status.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.info {
+            background-color: #e2f0fd;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        .server-status {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .server-status .indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .server-status .indicator.online {
+            background-color: #28a745;
+        }
+        .server-status .indicator.offline {
+            background-color: #dc3545;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Prueba de Envío de Correos</h1>
+    
+    <div class="card">
+        <div id="serverStatus" class="server-status">
+            <div class="indicator offline"></div>
+            <span>Verificando estado del servidor...</span>
+        </div>
+
+        <div id="statusMessage" style="display:none;"></div>
+        
+        <div class="form-group">
+            <label for="email">Correo Electrónico de Destino:</label>
+            <input type="email" id="email" placeholder="ejemplo@correo.com" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="token">Token de Verificación:</label>
+            <input type="text" id="token" placeholder="123456" maxlength="6" required>
+            <button style="margin-top: 5px;" class="btn" onclick="generateRandomToken()">Generar token aleatorio</button>
+        </div>
+        
+        <button id="sendButton" class="btn" onclick="sendEmail()">Enviar Correo de Prueba</button>
+        
+        <div class="form-group" style="margin-top: 20px;">
+            <label for="response">Respuesta del Servidor:</label>
+            <pre id="response">Esperando envío...</pre>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h2>Información de Configuración SMTP</h2>
+        <pre id="serverConfig">Cargando configuración...</pre>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', checkServerStatus);
+
+        function checkServerStatus() {
+            fetch('/api/status')
+                .then(response => response.json())
+                .then(data => {
+                    const statusIndicator = document.querySelector('#serverStatus .indicator');
+                    const statusText = document.querySelector('#serverStatus span');
+                    
+                    statusIndicator.classList.remove('offline');
+                    statusIndicator.classList.add('online');
+                    statusText.textContent = 'Servidor de correos activo';
+                    
+                    // Display server config
+                    document.getElementById('serverConfig').textContent = JSON.stringify(data, null, 2);
+                })
+                .catch(error => {
+                    const statusIndicator = document.querySelector('#serverStatus .indicator');
+                    const statusText = document.querySelector('#serverStatus span');
+                    
+                    statusIndicator.classList.remove('online');
+                    statusIndicator.classList.add('offline');
+                    statusText.textContent = 'Servidor de correos inactivo: ' + error.message;
+                    
+                    showStatus('error', 'No se pudo conectar con el servidor. Asegúrate de que el servidor esté corriendo en puerto 3001.');
+                });
+        }
+
+        function generateRandomToken() {
+            const token = Math.floor(100000 + Math.random() * 900000).toString();
+            document.getElementById('token').value = token;
+        }
+
+        function sendEmail() {
+            const email = document.getElementById('email').value;
+            const token = document.getElementById('token').value;
+            
+            if (!email || !token) {
+                showStatus('error', 'Por favor completa todos los campos.');
+                return;
+            }
+            
+            const sendButton = document.getElementById('sendButton');
+            sendButton.disabled = true;
+            sendButton.textContent = 'Enviando...';
+            
+            const responseArea = document.getElementById('response');
+            responseArea.textContent = 'Enviando solicitud...';
+            
+            fetch('/api/send-verification-email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, token })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Error ${response.status}: ${response.statusText}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                responseArea.textContent = JSON.stringify(data, null, 2);
+                showStatus('success', '¡Correo enviado con éxito! Revisa tu bandeja de entrada.');
+            })
+            .catch(error => {
+                responseArea.textContent = error.message;
+                showStatus('error', 'Error al enviar el correo. Ver detalles abajo.');
+            })
+            .finally(() => {
+                sendButton.disabled = false;
+                sendButton.textContent = 'Enviar Correo de Prueba';
+            });
+        }
+
+        function showStatus(type, message) {
+            const statusElement = document.getElementById('statusMessage');
+            statusElement.className = 'status ' + type;
+            statusElement.textContent = message;
+            statusElement.style.display = 'block';
+            
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

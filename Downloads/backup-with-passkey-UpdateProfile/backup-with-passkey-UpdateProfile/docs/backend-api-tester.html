@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend API Tester</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+        }
+        .endpoint-section {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 4px solid #4CAF50;
+        }
+        .btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #45a049;
+        }
+        .btn.danger {
+            background: #f44336;
+        }
+        .btn.danger:hover {
+            background: #da190b;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .result {
+            background: #e8f5e8;
+            border: 1px solid #4CAF50;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .error {
+            background: #ffeaea;
+            border-color: #f44336;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-online { background: #4CAF50; }
+        .status-offline { background: #f44336; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Backend API Tester</h1>
+        <p style="text-align: center;">
+            <span class="status-indicator" id="serverStatus"></span>
+            <span id="serverStatusText">Verificando estado del servidor...</span>
+        </p>
+
+        <!-- Health Check -->
+        <div class="endpoint-section">
+            <h2>🏥 Health Check</h2>
+            <button class="btn" onclick="testHealth()">GET /api/health</button>
+            <div id="healthResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- Database Connection -->
+        <div class="endpoint-section">
+            <h2>🔗 Database Connection</h2>
+            <button class="btn" onclick="testConnection()">POST /api/db/connect</button>
+            <div id="connectionResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- List Collections -->
+        <div class="endpoint-section">
+            <h2>📋 List Collections</h2>
+            <button class="btn" onclick="listCollections()">GET /api/db/collections</button>
+            <div id="collectionsResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- Create Document -->
+        <div class="endpoint-section">
+            <h2>➕ Create Document</h2>
+            <div class="input-group">
+                <label>Collection Name:</label>
+                <input type="text" id="createCollection" value="test_collection" placeholder="collection_name">
+            </div>
+            <div class="input-group">
+                <label>Document Data (JSON):</label>
+                <textarea id="createData" rows="4" placeholder='{"key": "value"}'>{
+  "name": "Test Document",
+  "value": 123,
+  "type": "Manual Test",
+  "timestamp": "2025-06-09"
+}</textarea>
+            </div>
+            <button class="btn" onclick="createDocument()">POST /api/db/create</button>
+            <div id="createResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- Read Documents -->
+        <div class="endpoint-section">
+            <h2>📖 Read Documents</h2>
+            <div class="input-group">
+                <label>Collection Name:</label>
+                <input type="text" id="readCollection" value="test_collection" placeholder="collection_name">
+            </div>
+            <div class="input-group">
+                <label>Query (JSON, optional):</label>
+                <input type="text" id="readQuery" value="{}" placeholder='{"field": "value"}'>
+            </div>
+            <button class="btn" onclick="readDocuments()">GET /api/db/read</button>
+            <div id="readResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- Update Documents -->
+        <div class="endpoint-section">
+            <h2>✏️ Update Documents</h2>
+            <div class="input-group">
+                <label>Collection Name:</label>
+                <input type="text" id="updateCollection" value="test_collection" placeholder="collection_name">
+            </div>
+            <div class="input-group">
+                <label>Query (JSON):</label>
+                <input type="text" id="updateQuery" value='{"type": "Manual Test"}' placeholder='{"field": "value"}'>
+            </div>
+            <div class="input-group">
+                <label>Update Data (JSON):</label>
+                <input type="text" id="updateData" value='{"status": "updated", "value": 456}' placeholder='{"field": "new_value"}'>
+            </div>
+            <button class="btn" onclick="updateDocuments()">PUT /api/db/update</button>
+            <div id="updateResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- Delete Documents -->
+        <div class="endpoint-section">
+            <h2>🗑️ Delete Documents</h2>
+            <div class="input-group">
+                <label>Collection Name:</label>
+                <input type="text" id="deleteCollection" value="test_collection" placeholder="collection_name">
+            </div>
+            <div class="input-group">
+                <label>Query (JSON):</label>
+                <input type="text" id="deleteQuery" value='{"type": "Manual Test"}' placeholder='{"field": "value"}'>
+            </div>
+            <button class="btn" onclick="deleteDocuments()">DELETE /api/db/delete</button>
+            <div id="deleteResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- Drop Collection -->
+        <div class="endpoint-section">
+            <h2>💥 Drop Collection</h2>
+            <div class="input-group">
+                <label>Collection Name:</label>
+                <input type="text" id="dropCollection" value="test_collection" placeholder="collection_name">
+            </div>
+            <button class="btn danger" onclick="dropCollection()">DELETE /api/db/drop-collection</button>
+            <div id="dropResult" class="result" style="display:none;"></div>
+        </div>
+
+        <!-- Quick Test All -->
+        <div class="endpoint-section">
+            <h2>⚡ Quick Test</h2>
+            <button class="btn" onclick="runAllTests()" style="background: #FF9800;">🧪 Run All Tests</button>
+            <div id="allTestsResult" class="result" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3002';
+
+        // Check server status on load
+        window.onload = function() {
+            checkServerStatus();
+        };
+
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/api/health`);
+                const data = await response.json();
+                document.getElementById('serverStatus').className = 'status-indicator status-online';
+                document.getElementById('serverStatusText').textContent = 'Servidor en línea ✅';
+            } catch (error) {
+                document.getElementById('serverStatus').className = 'status-indicator status-offline';
+                document.getElementById('serverStatusText').textContent = 'Servidor desconectado ❌';
+            }
+        }
+
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.style.display = 'block';
+            element.className = isError ? 'result error' : 'result';
+            element.textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function testHealth() {
+            try {
+                const response = await fetch(`${API_BASE}/api/health`);
+                const data = await response.json();
+                showResult('healthResult', data);
+            } catch (error) {
+                showResult('healthResult', { error: error.message }, true);
+            }
+        }
+
+        async function testConnection() {
+            try {
+                const response = await fetch(`${API_BASE}/api/db/connect`, { method: 'POST' });
+                const data = await response.json();
+                showResult('connectionResult', data);
+            } catch (error) {
+                showResult('connectionResult', { error: error.message }, true);
+            }
+        }
+
+        async function listCollections() {
+            try {
+                const response = await fetch(`${API_BASE}/api/db/collections`);
+                const data = await response.json();
+                showResult('collectionsResult', data);
+            } catch (error) {
+                showResult('collectionsResult', { error: error.message }, true);
+            }
+        }
+
+        async function createDocument() {
+            try {
+                const collectionName = document.getElementById('createCollection').value;
+                const data = JSON.parse(document.getElementById('createData').value);
+                
+                const response = await fetch(`${API_BASE}/api/db/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ collectionName, data })
+                });
+                const result = await response.json();
+                showResult('createResult', result);
+            } catch (error) {
+                showResult('createResult', { error: error.message }, true);
+            }
+        }
+
+        async function readDocuments() {
+            try {
+                const collectionName = document.getElementById('readCollection').value;
+                const query = document.getElementById('readQuery').value;
+                
+                const url = `${API_BASE}/api/db/read?collectionName=${encodeURIComponent(collectionName)}&query=${encodeURIComponent(query)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                showResult('readResult', data);
+            } catch (error) {
+                showResult('readResult', { error: error.message }, true);
+            }
+        }
+
+        async function updateDocuments() {
+            try {
+                const collectionName = document.getElementById('updateCollection').value;
+                const query = JSON.parse(document.getElementById('updateQuery').value);
+                const update = JSON.parse(document.getElementById('updateData').value);
+                
+                const response = await fetch(`${API_BASE}/api/db/update`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ collectionName, query, update })
+                });
+                const data = await response.json();
+                showResult('updateResult', data);
+            } catch (error) {
+                showResult('updateResult', { error: error.message }, true);
+            }
+        }
+
+        async function deleteDocuments() {
+            try {
+                const collectionName = document.getElementById('deleteCollection').value;
+                const query = JSON.parse(document.getElementById('deleteQuery').value);
+                
+                const response = await fetch(`${API_BASE}/api/db/delete`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ collectionName, query })
+                });
+                const data = await response.json();
+                showResult('deleteResult', data);
+            } catch (error) {
+                showResult('deleteResult', { error: error.message }, true);
+            }
+        }
+
+        async function dropCollection() {
+            const collectionName = document.getElementById('dropCollection').value;
+            if (!confirm(`¿Estás seguro de que quieres eliminar la colección "${collectionName}"?`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/db/drop-collection`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ collectionName })
+                });
+                const data = await response.json();
+                showResult('dropResult', data);
+            } catch (error) {
+                showResult('dropResult', { error: error.message }, true);
+            }
+        }
+
+        async function runAllTests() {
+            const results = [];
+            
+            try {
+                // Test 1: Health
+                const health = await fetch(`${API_BASE}/api/health`);
+                results.push({ test: 'Health Check', result: await health.json() });
+                
+                // Test 2: Connection
+                const connect = await fetch(`${API_BASE}/api/db/connect`, { method: 'POST' });
+                results.push({ test: 'DB Connection', result: await connect.json() });
+                
+                // Test 3: Create
+                const create = await fetch(`${API_BASE}/api/db/create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        collectionName: 'test_quick', 
+                        data: { name: 'Quick Test', value: 999 }
+                    })
+                });
+                results.push({ test: 'Create Document', result: await create.json() });
+                
+                // Test 4: Read
+                const read = await fetch(`${API_BASE}/api/db/read?collectionName=test_quick&query={}`);
+                results.push({ test: 'Read Documents', result: await read.json() });
+                
+                // Test 5: Update
+                const update = await fetch(`${API_BASE}/api/db/update`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        collectionName: 'test_quick',
+                        query: { name: 'Quick Test' },
+                        update: { status: 'tested' }
+                    })
+                });
+                results.push({ test: 'Update Document', result: await update.json() });
+                
+                // Test 6: Delete
+                const del = await fetch(`${API_BASE}/api/db/delete`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        collectionName: 'test_quick',
+                        query: { name: 'Quick Test' }
+                    })
+                });
+                results.push({ test: 'Delete Document', result: await del.json() });
+                
+                // Test 7: Drop
+                const drop = await fetch(`${API_BASE}/api/db/drop-collection`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ collectionName: 'test_quick' })
+                });
+                results.push({ test: 'Drop Collection', result: await drop.json() });
+                
+                showResult('allTestsResult', { 
+                    message: 'All tests completed',
+                    timestamp: new Date().toISOString(),
+                    results 
+                });
+                
+            } catch (error) {
+                showResult('allTestsResult', { error: error.message }, true);
+            }
+        }
+    </script>
+</body>
+</html>

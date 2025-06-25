@@ -1,0 +1,30 @@
+# Individual curl commands for whitelisting CURPs
+# Copy and paste these commands one by one into your terminal
+# Make sure your backend server is running on port 3002
+
+# 1. Ana Garcia Martinez
+curl -X POST "http://localhost:3002/api/db/create" -H "Content-Type: application/json" -d '{"collectionName":"whitelist","data":{"curp":"GAMA920718MDFRRN04"}}'
+
+# 2. Javier Rodriguez Perez
+curl -X POST "http://localhost:3002/api/db/create" -H "Content-Type: application/json" -d '{"collectionName":"whitelist","data":{"curp":"ROPJ870429HJCDXV01"}}'
+
+# 3. Sofia Mendez Cruz
+curl -X POST "http://localhost:3002/api/db/create" -H "Content-Type: application/json" -d '{"collectionName":"whitelist","data":{"curp":"MECS910506MMSRRF08"}}'
+
+# 4. Roberto Diaz Flores
+curl -X POST "http://localhost:3002/api/db/create" -H "Content-Type: application/json" -d '{"collectionName":"whitelist","data":{"curp":"DIFR891123HCLZLB02"}}'
+
+# 5. Maria Fernandez Morales
+curl -X POST "http://localhost:3002/api/db/create" -H "Content-Type: application/json" -d '{"collectionName":"whitelist","data":{"curp":"FEMM930617MVZRRAR03"}}'
+
+# 6. Daniel Gutierrez Sanchez
+curl -X POST "http://localhost:3002/api/db/create" -H "Content-Type: application/json" -d '{"collectionName":"whitelist","data":{"curp":"GUSD850730HPLTNRN07"}}'
+
+# 7. Elena Ortiz Vargas
+curl -X POST "http://localhost:3002/api/db/create" -H "Content-Type: application/json" -d '{"collectionName":"whitelist","data":{"curp":"OIVE941209MMCRRL00"}}'
+
+# 8. Alejandro Reyes Castro
+curl -X POST "http://localhost:3002/api/db/create" -H "Content-Type: application/json" -d '{"collectionName":"whitelist","data":{"curp":"RECA860825HTSYSL03"}}'
+
+# 9. Carmen Vega Medina
+curl -X POST "http://localhost:3002/api/db/create" -H "Content-Type: application/json" -d '{"collectionName":"whitelist","data":{"curp":"VEMC980320MGRGRR07"}}'

@@ -1,0 +1,28 @@
+So as you can see, right now whats happening is when we click on registrate, it shows...
+
+Registro de Usuario
+Complete el proceso de registro para acceder al sistema
+
+
+1
+Verificar CURP
+
+Confirmar Datos
+
+Crear Contraseña
+
+Registro Facial
+Ingresa tu CURP para verificar su validez en el sistema RENAPO y proceder con el registro.
+
+CURP
+Tu CURP (18 caracteres)
+Siguiente
+
+←
+Volver al inicio de sesión
+
+
+
+But instead now it should be, when we enter the curp and click on registrate, it should directly get the data from api, and then it should be displayed exactly as pasted image, similarly, you need to change the layout of all the steps, as shown in refrence images shared with this chat, deeply analyze the complete current codebase and do the required enhancements
+
+Hope you got the idea

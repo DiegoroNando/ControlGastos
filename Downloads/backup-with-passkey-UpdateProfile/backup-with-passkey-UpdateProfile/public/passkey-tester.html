@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WebAuthn/Passkey Test Page</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    
+    h1, h2 {
+      color: #333;
+    }
+    
+    .card {
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    button {
+      background: #0066cc;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px 0;
+    }
+    
+    button:hover {
+      background: #0055aa;
+    }
+    
+    pre {
+      background: #f0f0f0;
+      padding: 10px;
+      border-radius: 4px;
+      overflow: auto;
+      max-height: 200px;
+    }
+    
+    .log {
+      background: #333;
+      color: #fff;
+      padding: 10px;
+      border-radius: 4px;
+      height: 200px;
+      overflow: auto;
+      margin-top: 20px;
+    }
+    
+    input {
+      padding: 8px;
+      margin: 5px 0 15px;
+      width: 100%;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    
+    .result-success {
+      color: green;
+      font-weight: bold;
+    }
+    
+    .result-error {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>WebAuthn/Passkey Test Page</h1>
+  
+  <div class="card">
+    <h2>1. Environment Check</h2>
+    <button id="checkSupport">Check WebAuthn Support</button>
+    <div id="supportResult"></div>
+  </div>
+  
+  <div class="card">
+    <h2>2. Register a Passkey</h2>
+    <div>
+      <label for="curp">CURP:</label>
+      <input id="curp" type="text" placeholder="Enter CURP" />
+    </div>
+    <div>
+      <label for="name">Name:</label>
+      <input id="name" type="text" placeholder="Enter name" />
+    </div>
+    <button id="registerPasskey">Register Passkey</button>
+    <div id="registerResult"></div>
+  </div>
+  
+  <div class="card">
+    <h2>3. Authenticate with Passkey</h2>
+    <button id="authenticatePasskey">Authenticate with Passkey</button>
+    <div id="authResult"></div>
+  </div>
+  
+  <div class="card">
+    <h2>4. Debug Info</h2>
+    <button id="checkRpId">Check rpID Configuration</button>
+    <button id="checkOrigin">Check Origin</button>
+    <button id="checkCookies">Check Cookies</button>
+    <div id="debugResult"></div>
+  </div>
+  
+  <h2>Log</h2>
+  <div class="log" id="log"></div>
+  
+  <script>
+    // Logging function
+    function log(message, data = null) {
+      const logElement = document.getElementById('log');
+      const timestamp = new Date().toLocaleTimeString();
+      
+      let logItem = document.createElement('div');
+      
+      if (data) {
+        console.log(message, data); // Also log to console
+        logItem.textContent = `[${timestamp}] ${message}: ${JSON.stringify(data)}`;
+      } else {
+        console.log(message); // Also log to console
+        logItem.textContent = `[${timestamp}] ${message}`;
+      }
+      
+      logElement.appendChild(logItem);
+      logElement.scrollTop = logElement.scrollHeight;
+    }
+    
+    // Check WebAuthn support
+    document.getElementById('checkSupport').addEventListener('click', async () => {
+      const supportResult = document.getElementById('supportResult');
+      
+      log('Checking WebAuthn support...');
+      
+      if (!window.PublicKeyCredential) {
+        supportResult.innerHTML = '<span class="result-error">❌ WebAuthn is NOT supported in this browser</span>';
+        log('WebAuthn is NOT supported');
+        return;
+      }
+      
+      supportResult.innerHTML = '<span class="result-success">✅ WebAuthn is supported</span>';
+      log('WebAuthn is supported');
+      
+      try {
+        const platformAuthResult = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        
+        if (platformAuthResult) {
+          supportResult.innerHTML += '<br><span class="result-success">✅ Platform authenticator is available</span>';
+          log('Platform authenticator is available');
+        } else {
+          supportResult.innerHTML += '<br><span class="result-error">❌ Platform authenticator is not available</span>';
+          log('Platform authenticator is not available');
+        }
+      } catch (error) {
+        supportResult.innerHTML += `<br><span class="result-error">❌ Error checking platform authenticator: ${error.message}</span>`;
+        log('Error checking platform authenticator', error);
+      }
+      
+      // Check secure context
+      if (window.isSecureContext) {
+        supportResult.innerHTML += '<br><span class="result-success">✅ Running in a secure context</span>';
+        log('Running in a secure context');
+      } else {
+        supportResult.innerHTML += '<br><span class="result-error">❌ NOT running in a secure context (HTTPS required)</span>';
+        log('NOT running in a secure context');
+      }
+    });
+    
+    // Register passkey
+    document.getElementById('registerPasskey').addEventListener('click', async () => {
+      const registerResult = document.getElementById('registerResult');
+      const curp = document.getElementById('curp').value.trim();
+      const name = document.getElementById('name').value.trim();
+      
+      if (!curp || !name) {
+        registerResult.innerHTML = '<span class="result-error">Please enter both CURP and name</span>';
+        return;
+      }
+      
+      registerResult.innerHTML = 'Registering passkey...';
+      log('Starting passkey registration', { curp, name });
+      
+      try {
+        // 1. Get registration options
+        log('Requesting registration options from server...');
+        const optionsResponse = await fetch('/api/passkey/generate-registration-options', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ curp, nombre: name }),
+          credentials: 'include'
+        });
+        
+        log('Registration options response status', { status: optionsResponse.status });
+        
+        if (!optionsResponse.ok) {
+          const errorText = await optionsResponse.text();
+          registerResult.innerHTML = `<span class="result-error">Failed to get registration options: ${optionsResponse.status}</span>`;
+          log('Failed to get registration options', { status: optionsResponse.status, error: errorText });
+          return;
+        }
+        
+        const options = await optionsResponse.json();
+        log('Registration options received', { 
+          rpID: options.rp?.id, 
+          timeout: options.timeout,
+          userID: options.user?.id,
+          userName: options.user?.name,
+          challenge: options.challenge ? '[present]' : '[missing]'
+        });
+        
+        // 2. Create credential
+        log('Starting browser registration...');
+        const credential = await navigator.credentials.create({
+          publicKey: options
+        });
+        
+        log('Browser registration completed', { id: credential.id });
+        
+        // 3. Send credential to server for verification
+        log('Sending credential to server for verification...');
+        
+        // Convert ArrayBuffers to base64 strings for JSON transmission
+        const credentialForServer = {
+          id: credential.id,
+          type: credential.type,
+          rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+          response: {
+            clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))),
+            attestationObject: btoa(String.fromCharCode(...new Uint8Array(credential.response.attestationObject)))
+          }
+        };
+        
+        if (credential.response.authenticatorData) {
+          credentialForServer.response.authenticatorData = btoa(
+            String.fromCharCode(...new Uint8Array(credential.response.authenticatorData))
+          );
+        }
+        
+        const verificationResponse = await fetch('/api/passkey/verify-registration', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            curp,
+            credential: credentialForServer 
+          }),
+          credentials: 'include'
+        });
+        
+        log('Verification response status', { status: verificationResponse.status });
+        
+        if (!verificationResponse.ok) {
+          const errorText = await verificationResponse.text();
+          registerResult.innerHTML = `<span class="result-error">Failed to verify registration: ${verificationResponse.status}</span>`;
+          log('Failed to verify registration', { status: verificationResponse.status, error: errorText });
+          return;
+        }
+        
+        const verificationResult = await verificationResponse.json();
+        log('Registration verification result', verificationResult);
+        
+        if (verificationResult.verified) {
+          registerResult.innerHTML = '<span class="result-success">Passkey registered successfully!</span>';
+        } else {
+          registerResult.innerHTML = `<span class="result-error">Registration verification failed: ${verificationResult.error || 'Unknown error'}</span>`;
+        }
+      } catch (error) {
+        registerResult.innerHTML = `<span class="result-error">Error: ${error.message}</span>`;
+        log('Error during registration', { error: error.message, stack: error.stack });
+      }
+    });
+    
+    // Authenticate with passkey
+    document.getElementById('authenticatePasskey').addEventListener('click', async () => {
+      const authResult = document.getElementById('authResult');
+      
+      authResult.innerHTML = 'Authenticating with passkey...';
+      log('Starting passkey authentication');
+      
+      try {
+        // 1. Get authentication options
+        log('Requesting authentication options from server...');
+        const optionsResponse = await fetch('/api/passkey/generate-authentication-options', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+        
+        log('Authentication options response status', { status: optionsResponse.status });
+        
+        if (!optionsResponse.ok) {
+          const errorText = await optionsResponse.text();
+          authResult.innerHTML = `<span class="result-error">Failed to get authentication options: ${optionsResponse.status}</span>`;
+          log('Failed to get authentication options', { status: optionsResponse.status, error: errorText });
+          return;
+        }
+        
+        const options = await optionsResponse.json();
+        log('Authentication options received', { rpID: options.rpId, timeout: options.timeout });
+        
+        // 2. Get credential
+        log('Starting browser authentication...');
+        const credential = await navigator.credentials.get({
+          publicKey: options
+        });
+        
+        log('Browser authentication completed', { id: credential.id });
+        
+        // 3. Send credential to server for verification
+        log('Sending credential to server for verification...');
+        
+        // Convert ArrayBuffers to base64 strings for JSON transmission
+        const credentialForServer = {
+          id: credential.id,
+          type: credential.type,
+          rawId: btoa(String.fromCharCode(...new Uint8Array(credential.rawId))),
+          response: {
+            clientDataJSON: btoa(String.fromCharCode(...new Uint8Array(credential.response.clientDataJSON))),
+            authenticatorData: btoa(String.fromCharCode(...new Uint8Array(credential.response.authenticatorData))),
+            signature: btoa(String.fromCharCode(...new Uint8Array(credential.response.signature))),
+            userHandle: credential.response.userHandle ? btoa(String.fromCharCode(...new Uint8Array(credential.response.userHandle))) : null
+          }
+        };
+        
+        const verificationResponse = await fetch('/api/passkey/verify-authentication', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credential: credentialForServer }),
+          credentials: 'include'
+        });
+        
+        log('Authentication verification response status', { status: verificationResponse.status });
+        
+        if (!verificationResponse.ok) {
+          const errorText = await verificationResponse.text();
+          authResult.innerHTML = `<span class="result-error">Failed to verify authentication: ${verificationResponse.status}</span>`;
+          log('Failed to verify authentication', { status: verificationResponse.status, error: errorText });
+          return;
+        }
+        
+        const verificationResult = await verificationResponse.json();
+        log('Authentication verification result', verificationResult);
+        
+        if (verificationResult.verified) {
+          authResult.innerHTML = `<span class="result-success">Authentication successful!</span><br>User: ${verificationResult.user?.nombre || 'Unknown'}`;
+        } else {
+          authResult.innerHTML = `<span class="result-error">Authentication failed: ${verificationResult.error || 'Unknown error'}</span>`;
+        }
+      } catch (error) {
+        authResult.innerHTML = `<span class="result-error">Error: ${error.message}</span>`;
+        log('Error during authentication', { error: error.message, stack: error.stack });
+      }
+    });
+    
+    // Debug tools
+    document.getElementById('checkRpId').addEventListener('click', async () => {
+      const debugResult = document.getElementById('debugResult');
+      
+      try {
+        const response = await fetch('/api/passkey/debug-rpid', {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          debugResult.innerHTML = `<span class="result-error">Failed to check rpID: ${response.status}</span>`;
+          return;
+        }
+        
+        const result = await response.json();
+        log('rpID configuration', result);
+        debugResult.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+      } catch (error) {
+        debugResult.innerHTML = `<span class="result-error">Error checking rpID: ${error.message}</span>`;
+      }
+    });
+    
+    document.getElementById('checkOrigin').addEventListener('click', () => {
+      const debugResult = document.getElementById('debugResult');
+      const originInfo = {
+        origin: window.location.origin,
+        hostname: window.location.hostname,
+        protocol: window.location.protocol,
+        secureContext: window.isSecureContext
+      };
+      
+      log('Origin information', originInfo);
+      debugResult.innerHTML = `<pre>${JSON.stringify(originInfo, null, 2)}</pre>`;
+    });
+    
+    document.getElementById('checkCookies').addEventListener('click', () => {
+      const debugResult = document.getElementById('debugResult');
+      
+      if (!document.cookie) {
+        debugResult.innerHTML = '<span class="result-error">No cookies found</span>';
+        log('No cookies found');
+        return;
+      }
+      
+      const cookies = document.cookie.split(';').map(cookie => cookie.trim());
+      log('Cookies', cookies);
+      debugResult.innerHTML = `<pre>${JSON.stringify(cookies, null, 2)}</pre>`;
+    });
+    
+    // Initial check
+    log('Page loaded, checking WebAuthn support...');
+    if (window.PublicKeyCredential) {
+      log('WebAuthn is supported in this browser');
+    } else {
+      log('WebAuthn is NOT supported in this browser');
+    }
+  </script>
+</body>
+</html>

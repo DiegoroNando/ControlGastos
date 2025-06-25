@@ -1,0 +1,200 @@
+/* Existing styles above */
+
+/* Estilos unificados para sidebars móviles - SOLO para pantallas pequeñas */
+@media (max-width: 1024px) {
+  .mobile-sidebar-menu,
+  .admin-mobile-sidebar-menu {
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    position: fixed;
+    top: 0; /* Inicia desde arriba */
+    bottom: 0;
+    left: 0;
+    z-index: 42; /* Mayor que el overlay (41) pero menor que la navbar (50) */
+    height: 100vh; /* Altura completa de la ventana */
+    padding-top: 4.5rem; /* Padding superior para respetar la navbar SOLO EN MÓVIL */
+    overflow-y: auto; /* Permite scroll interno si el contenido es muy largo */
+    overscroll-behavior: contain; /* Evita que el scroll se propague al body */
+  }
+  
+  /* Solo aplicar padding cuando esté dentro del contenedor móvil */
+  .admin-mobile-sidebar-menu #admin-sidebar {
+    padding-top: 4.5rem; /* Aplicar padding solo en versión móvil */
+  }
+}
+
+@media (max-width: 1024px) {
+  .mobile-sidebar-menu.open,
+  .admin-mobile-sidebar-menu.open {
+    transform: translateX(0);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.15);
+  }
+  .mobile-sidebar-overlay {
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+    pointer-events: none;
+    position: fixed;
+    top: 0; /* Empieza desde arriba para cubrir toda la pantalla */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 41; /* Menor que las sidebars (42) pero mayor que el contenido normal */
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+  }
+
+  .mobile-sidebar-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* Asegurar que las sidebars no interfieran con el footer en pantallas muy pequeñas - SOLO móviles */
+@media (max-width: 1024px) and (max-height: 600px) {
+  .mobile-sidebar-menu,
+  .admin-mobile-sidebar-menu {
+    padding-bottom: 2rem; /* Espacio adicional en la parte inferior para pantallas pequeñas */
+  }
+}
+
+/* Altura mínima garantizada para la navbar SOLO en pantallas móviles/tablets */
+@media (max-width: 1024px) {
+  nav {
+    min-height: 4.5rem !important;
+  }
+
+  /* Elementos específicos de la navbar que necesitan mantener altura mínima */
+  nav > div {
+    min-height: 4.5rem;
+  }
+
+  nav .flex {
+    min-height: 4.5rem;
+  }
+}
+
+/* Asegurar altura mínima en pantallas muy pequeñas - SOLO móviles */
+@media (max-width: 1024px) and (max-height: 480px) {
+  nav {
+    min-height: 3.5rem !important;
+  }
+  
+  nav > div {
+    min-height: 3.5rem;
+  }
+  
+  nav .flex {
+    min-height: 3.5rem;
+  }
+  
+  .mobile-sidebar-menu {
+    padding-top: 3.5rem; /* Ajustar padding superior para pantallas pequeñas - sidebar regular */
+  }
+  
+  .admin-mobile-sidebar-menu #admin-sidebar {
+    padding-top: 3.5rem; /* Ajustar padding superior para pantallas pequeñas - admin sidebar */
+  }
+}
+
+/* Asegurar altura mínima en pantallas ultra pequeñas - SOLO móviles */
+@media (max-width: 1024px) and (max-height: 320px) {
+  nav {
+    min-height: 3rem !important;
+  }
+  
+  nav > div {
+    min-height: 3rem;
+  }
+  
+  nav .flex {
+    min-height: 3rem;
+  }
+  
+  .mobile-sidebar-menu {
+    padding-top: 3rem; /* Ajustar padding superior para pantallas ultra pequeñas - sidebar regular */
+  }
+  
+  .admin-mobile-sidebar-menu #admin-sidebar {
+    padding-top: 3rem; /* Ajustar padding superior para pantallas ultra pequeñas - admin sidebar */
+  }
+}
+
+/* Prevenir que elementos dentro de la navbar colapsen */
+@media (max-width: 640px) {
+  nav .text-lg {
+    font-size: 1rem; /* Reduce el tamaño del logo en pantallas pequeñas */
+  }
+  
+  nav button {
+    min-height: 2.5rem; /* Asegurar altura mínima para botones */
+  }
+}
+
+/* Estilos adicionales para asegurar que el contenido de las sidebars respete la navbar */
+@media (max-width: 1024px) {
+  /* AdminSidebar específico - resetear cualquier margen superior en móvil */
+  .admin-mobile-sidebar-menu #admin-sidebar .flex-shrink-0:first-child {
+    margin-top: 0;
+  }
+  
+  /* Sidebar regular - asegurar que el header esté correctamente posicionado */
+  .mobile-sidebar-menu .flex.items-center.justify-between:first-child {
+    margin-top: 0;
+  }
+  
+  /* Padding adicional para el contenido scrolleable - solo en versión móvil */
+  .mobile-sidebar-menu .flex.flex-col,
+  .admin-mobile-sidebar-menu #admin-sidebar .flex-1.flex.flex-col {
+    padding-top: 0.5rem; /* Pequeño padding adicional para separación visual */
+  }
+}
+
+/* Validación visual y ajuste fino del padding de las sidebars */
+@media (max-width: 1024px) {
+  /* Asegurar que el overlay no interfiera con la interacción de la navbar */
+  .mobile-sidebar-overlay {
+    pointer-events: none;
+  }
+  
+  .mobile-sidebar-overlay.visible {
+    pointer-events: auto;
+  }
+  
+  /* Debug: Agregar un borde temporal para verificar el posicionamiento (se puede remover después) */
+  .mobile-sidebar-menu,
+  .admin-mobile-sidebar-menu {
+    /* border-top: 3px solid red; */ /* Descomenta para debugging visual */
+    box-sizing: border-box;
+  }
+  
+  /* Asegurar que el contenido interno tenga el spacing correcto - solo en móvil */
+  .mobile-sidebar-menu > div:first-child {
+    padding-top: 1rem; /* Padding superior adicional para el primer elemento */
+  }
+  
+  .admin-mobile-sidebar-menu #admin-sidebar > div:first-child {
+    padding-top: 1rem; /* Padding superior adicional para el admin sidebar */
+  }
+}
+
+/* Ajustes específicos para diferentes alturas de navbar en pantallas pequeñas */
+@media (max-width: 1024px) and (max-height: 480px) {
+  .mobile-sidebar-menu > div:first-child {
+    padding-top: 0.75rem; /* Menos padding en pantallas más pequeñas */
+  }
+  
+  .admin-mobile-sidebar-menu #admin-sidebar > div:first-child {
+    padding-top: 0.75rem; /* Menos padding en pantallas más pequeñas - admin sidebar */
+  }
+}
+
+@media (max-width: 1024px) and (max-height: 320px) {
+  .mobile-sidebar-menu > div:first-child {
+    padding-top: 0.5rem; /* Mínimo padding en pantallas ultra pequeñas */
+  }
+  
+  .admin-mobile-sidebar-menu #admin-sidebar > div:first-child {
+    padding-top: 0.5rem; /* Mínimo padding en pantallas ultra pequeñas - admin sidebar */
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "name": "sistema-de-votaciones-para-comite-de-etica",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "server": "node server.js",
+    "dev:server": "nodemon server.js",
+    "backend": "node backend-server.js",
+    "dev:backend": "nodemon backend-server.js",
+    "start": "concurrently \"npm run dev\" \"npm run dev:server\"",
+    "start:full": "concurrently \"npm run dev\" \"npm run dev:server\" \"npm run dev:backend\""
+  },
+  "dependencies": {
+    "@azure-rest/ai-vision-face": "^1.0.0-beta.3",
+    "@azure/core-auth": "^1.9.0",
+    "@headlessui/react": "^2.2.4",
+    "@simplewebauthn/browser": "^13.1.0",
+    "@simplewebauthn/server": "^13.1.1",
+    "axios": "^1.10.0",
+    "bcrypt": "^6.0.0",
+    "body-parser": "^1.20.3",
+    "chart.js": "^4.4.9",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "lucide-react": "^0.523.0",
+    "mongodb": "^6.17.0",
+    "mongoose": "^8.15.1",
+    "node-fetch": "^3.3.2",
+    "nodemailer": "^6.10.1",
+    "react": "^19.1.0",
+    "react-chartjs-2": "^5.3.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.6.1",
+    "react-transition-group": "^4.4.5"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/node": "^22.14.0",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.6",
+    "@types/react-transition-group": "^4.4.12",
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.1.10",
+    "typescript": "~5.7.2",
+    "vite": "^6.2.0"
+  }
+}
