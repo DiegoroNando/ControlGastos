@@ -4,6 +4,7 @@ import { useBudget } from './hook/useBudget'
 import  BudgetTracker from './components/BudgetTracker'
 import ExpenseModal from './components/ExpenseModal'
 import ExpenseList from './components/ExpenseList'
+import FilterCategory from './components/FilterCategory'
 function App() {
  
   const {state} = useBudget()
@@ -30,7 +31,7 @@ function App() {
 
      {isvalidBudget && (
       <main className='max-w-3xl mx-auto py-10'>
-
+        <FilterCategory/>
         <ExpenseList/>
         <ExpenseModal/>
       </main>
